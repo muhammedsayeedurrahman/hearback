@@ -1,0 +1,10 @@
+.env
+.env.local
+*.key
+__pycache__/
+.venv/
+node_modules/
+.next/
+evidence/clips/*.wav
+evidence/clips/*.mp3
+!evidence/clips/.gitkeep
