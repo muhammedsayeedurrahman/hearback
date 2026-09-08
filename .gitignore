@@ -8,3 +8,8 @@ node_modules/
 evidence/clips/*.wav
 evidence/clips/*.mp3
 !evidence/clips/.gitkeep
+
+# Claude Code local files
+.claude/
+CLAUDE.md
+CLAUDE.local.md
