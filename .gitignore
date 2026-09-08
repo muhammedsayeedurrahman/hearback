@@ -13,3 +13,6 @@ evidence/clips/*.mp3
 .claude/
 CLAUDE.md
 CLAUDE.local.md
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
