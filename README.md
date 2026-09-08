@@ -161,6 +161,7 @@ docs/       PLAN.md companion material and research sources
 
 - [PLAN.md](PLAN.md): full analysis, idea, architecture, truth-state model, acceptance tests, feature backlog, build timeline.
 - [docs/research/](docs/research/): problem statement, original 4-hour plan, deep-research brief, facts verified against live Rime and LiveKit sources on 2026-09-08, and the [open-source and hackathon research report](docs/research/opensource-and-hackathon-research.md) (96 sources) behind features F10–F19.
+- [docs/research/github-and-feature-impact-analysis.md](docs/research/github-and-feature-impact-analysis.md): related open-source repositories, reusable mechanisms, feature impact ranking, and implementation recommendations.
 
 ## Safety
 
