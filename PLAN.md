@@ -378,6 +378,16 @@ Each feature is scored on rubric impact and build cost. Build in this order once
 | F7 | Siren-noise stress test | Adverse audio conditions, evidence | 1 h | Day 3 morning |
 | F8 | Audible provider fallback | Rime integration rule, cheap | 20 min | Day 2, any gap |
 | F9 | Hindi receiver relay | Multilingual routing | 1 h + listen test | Day 3, only if it passes |
+| F10 | Epoch on the wire: Rime `contextId` = Deepgram `turn_index` | Hard engineering, Rime integration | 1 h | Day 1, with the core |
+| F11 | SCOPE readback classifier with Slot F1 | Evidence, domain credibility | 1.5 h | Day 2 morning |
+| F12 | Uninterruptible critical readback with buffered corrections | Controlled delivery, hard engineering | 45 min | Day 2 afternoon |
+| F13 | LASA drug list forces `spell()`; NCC MERP number grammar | Rime integration, controlled delivery | 1 h | Day 2 afternoon |
+| F14 | Quarantine and history rewrite on interruption | Hard engineering, correctness | 1 h | Day 2 afternoon |
+| F15 | Hamming event taxonomy and live interruption metrics | Evaluation and observability | 1 h | Day 2 evening |
+| F16 | Barge-in regression suite (quantumCF scenarios) in CI | Evidence, reproducibility | 1.5 h | Day 3 morning |
+| F17 | Backchannel-aware barge-in with Deepgram keyterms | Adverse audio, hard engineering | 1 h | Day 3 morning |
+| F18 | Tamper-evident relay record (hash chain) | Safety framing, cheap | 30 min | Any gap |
+| F19 | Addressee gating and post-TTS echo guard | Adverse audio | 1 h | Day 3, if time |
 
 ### F1. Receiver hear-back (double loop)
 
@@ -415,6 +425,50 @@ When Rime is unreachable, the fallback voice says "Rime unavailable. Fallback vo
 
 Unchanged from the stretch goal: Coda `nadi` or `taru`, `lang: hi`, selected by the receiving nurse. Only ships if a five-sentence listen test passes on Day 3. Never in the judged flow otherwise.
 
+### F10. Epoch on the wire
+
+The epoch is not only an integer inside the engine. Every ws3 request carries `contextId = str(epoch)`, so every `chunk`, `timestamps` and `done` event from Rime comes back stamped, and Rime itself keeps only the newest context. Deepgram Flux increments `turn_index` on every end of turn, which gives the same number on the STT side for free. Any Rime event or tool result whose id is not the current epoch is dropped before it reaches playout, the same gate Pipecat uses (`audio_context_available`). Because the LiveKit Rime plugin sends `flush` and `eos` but never `clear`, we subclass it and send `{"operation": "clear"}` on `SpeechHandle.interrupted`. Evidence: T2 and T3 become a count of dropped stale contexts, visible in the event log. Sources: Rime ws3 reference, Pipecat Rime service, Deepgram Flux state, LiveKit plugin source (see docs/research/opensource-and-hackathon-research.md).
+
+### F11. SCOPE readback classifier
+
+After every readback (sender confirm in the core, receiver hear-back in F1) the engine classifies each fact using the air-traffic-control readback taxonomy from SCOPE: **Correct**, **Incorrect** (a safety-critical element changed), **Incomplete** (an element missing), **Non-standard** (right content, wrong phraseology), **Unknown** (not a readback). Correct → VERIFIED; Incorrect → CONFLICTED with both values; Incomplete → re-ask only the missing element; Non-standard → VERIFIED with a note. Report Slot F1 over the fixture set in RIME_EVIDENCE.md. This is a published, citable measure nobody in the hackathon space uses, and it gives the dashboard a per-fact reason for every transition.
+
+### F12. Uninterruptible critical readback with buffered corrections
+
+Allergy and drug-dose readbacks are spoken with `allow_interruptions=False` so a two-second readback always completes, matching Hamming's "non-interruptible disclosure" scenario. Speech during that window is still transcribed and buffered. If the buffer starts with a correction marker (F3 list) the readback is treated as rejected the instant it ends, and the buffered utterance becomes the next epoch without the user repeating it. Evidence: "repeated user speech rate" (Hamming) with and without buffering.
+
+### F13. Look-alike drug list and read-back grammar
+
+Ship a fixture built from the ISMP Confused Drug Names list (look-alike, sound-alike pairs such as hydralazine/hydroxyzine, and the fifteen/fifty, sixteen/sixty number pairs). When an extracted drug is on the list, the readback must use `spell()` and the phonetic alphabet, and the dashboard shows the pair it could be confused with. All numbers in critical readbacks follow NCC MERP: stated twice, once as a word and once digit by digit ("fifty milligrams, five-zero milligrams"), with `inlineSpeedAlpha` on the digits. The same list feeds Deepgram keyterm prompting so STT hears the names it will have to spell. Evidence for T5 becomes the digit WER on the LASA fixture, variant A versus B.
+
+### F14. Quarantine and history rewrite on interruption
+
+Borrowed from AVA for Asterisk. On barge-in: the interrupted assistant turn is replaced in LLM history by its heard prefix only (from the ledger), any LLM or TTS output that arrives late for the old epoch is quarantined in the log rather than discarded silently, and the next extraction prompt is focused on the correction. Tool results are committed to the engine before the agent starts speaking about them, which avoids LiveKit issue #3702 where results are lost and tools re-run. EHR-style writes use `on_duplicate="reject"`.
+
+### F15. Hamming event taxonomy and live metrics
+
+Rename and extend the event log to Hamming's runbook taxonomy: `user.speech_started`, `user.speech_stopped`, `agent.speech_started`, `agent.speech_interrupted {playback_position_ms, heard_boundary_word}`, `interruption.candidate_detected`, `interruption.decision_made {policy_version}`, `interruption.recovered`, `interruption.false_positive`, `silence.timeout`. The dashboard computes false-interruption rate, missed-interruption rate, resume success rate and repeated-user-speech rate live during the demo. Judges see standard industry metric names, and the log is the same one F5 replays.
+
+### F16. Barge-in regression suite in CI
+
+Adopt the eight scenarios from quantumCF's voice-agent-barge-in-tests (hard interruption, backchannel "mhm", filler start, correction, 8 kHz telephony, double talk, echo bleed, rapid turn-taking), add a ninth "correction mid-readback", and run them with `--fail-on-regression` in GitHub Actions against the Plan B transport. Each scenario reports `did_yield`, `time_to_yield`, and `talk_over` with the metric defined as "VAD rising edge to last Rime frame", the definition a previous winning team stated on stage. Fixtures are SHA-256 pinned, Coval style.
+
+### F17. Backchannel-aware barge-in with keyterms
+
+Deepgram `filler_words=true` plus the seven-token list: affirmative backchannels (`mhmm`, `uh-huh`, `okay`, `yeah`) hold the floor; negative ones (`mm-mm`, `uh-uh`, `nuh-uh`) yield. A two-second continuation window on word timestamps decides whether a backchannel became a real turn. The ATMIST slot vocabulary, drug names and units go into Deepgram keyterm prompting (up to 500 tokens). Evidence joins F3: false-stop rate on the 40-utterance set, and a keyterm-on versus keyterm-off WER on the medical vocabulary.
+
+### F18. Tamper-evident relay record
+
+Every relayed handover produces a record: the VERIFIED facts, their epochs, who confirmed what and when, and the heard boundaries. The record is hashed with SHA-256 and chained to the previous record in the session log, so an edit anywhere breaks the chain. Thirty minutes of work that turns the "handover firewall" story into something auditable, and it matches what verification-first hackathon projects were rewarded for.
+
+### F19. Addressee gating and echo guard
+
+Paramedics talk to the patient, to colleagues and to the agent. Two cheap guards from the field: a 350 ms post-TTS protection window so the agent's own tail does not trigger a barge-in (AVA's `post_tts_end_protection_ms`), and an addressee check so speech not directed at the agent is transcribed but does not interrupt (attenlabs saa-sdk has a LiveKit client; a wake-phrase such as "Hearback" is the fallback). Only if time remains on Day 3.
+
+### Critical tier, justified by the data
+
+The omission statistics from the handover literature set the order of the critical tier in F4: allergies (communicated in 54 % of EMS handovers, 39.7 % in the Indian study), medications (59 % / 39.0 %), airway (22 %), hypoxia (74 % not communicated), hypotension (42 % not communicated). Those five slots require readback; everything else relays as HEARD with the spoken tag. Cite the numbers in the README and on the pitch slide.
+
 ### Explicitly not adding
 
 Telephony, EHR, multi-patient, auth, real data, diagnosis, treatment suggestions. Each of these costs more than a day or breaks the safety framing.
@@ -429,6 +483,8 @@ Telephony, EHR, multi-patient, auth, real data, diagnosis, treatment suggestions
 | Word timestamps not surfaced by plugin version | Fall back to playout-clock estimate using chunk boundaries; document accuracy drop in T4 |
 | LLM extracts wrong value | Extraction is HEARD only; nothing relays without readback + confirm |
 | Hindi voice sounds poor | Keep as stretch; never in the judged flow unless it passes a listen test |
+| Rime `timestamps` events not emitted for Coda | Documented for English and Spanish on ws3; verify at preflight, fall back to `mistv3` for the readback voice and record the swap in RIME_EVIDENCE.md |
+| Plugin never sends ws3 `clear` | Subclass the LiveKit Rime TTS (F10); T2 proves it |
 | Secret leaks in a screenshot | `.env.example` only; gitleaks pre-commit; badge shows provider, never key |
 
 ---

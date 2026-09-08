@@ -47,9 +47,12 @@ Nurse:      presses Relay → Rime speaks only VERIFIED facts
 | **Closed-loop readback** | Critical values are read back with `spell()` for identifiers and slower numbers via `inlineSpeedAlpha`, and require explicit confirmation before `VERIFIED`. |
 | **Continuity during tool work** | The allergy cross-check tool runs with an injected 3 s delay. The agent keeps listening, accepts corrections mid-wait, and re-runs the tool under the new epoch. |
 
-Ranked backlog of further features (receiver hear-back, ATMIST completeness, fast-path barge-in
-keywords, criticality tiers, session replay, latency HUD, noise stress, audible fallback, Hindi
-relay) is in [PLAN.md](PLAN.md#11b-high-impact-features-ranked).
+Ranked backlog of further features (F1–F19: receiver hear-back, ATMIST completeness, fast-path
+barge-in keywords, criticality tiers, session replay, latency HUD, noise stress, audible fallback,
+Hindi relay, epoch on the wire via Rime `contextId`, SCOPE readback classifier, uninterruptible
+critical readback, look-alike drug spell-out, interruption quarantine, Hamming event taxonomy,
+barge-in regression suite, backchannel-aware barge-in, tamper-evident record, addressee gating) is
+in [PLAN.md](PLAN.md#11b-high-impact-features-ranked).
 
 ## Architecture
 
@@ -157,7 +160,7 @@ docs/       PLAN.md companion material and research sources
 ```
 
 - [PLAN.md](PLAN.md): full analysis, idea, architecture, truth-state model, acceptance tests, feature backlog, build timeline.
-- [docs/research/](docs/research/): problem statement, original 4-hour plan, deep-research brief, and facts verified against live Rime and LiveKit sources on 2026-09-08.
+- [docs/research/](docs/research/): problem statement, original 4-hour plan, deep-research brief, facts verified against live Rime and LiveKit sources on 2026-09-08, and the [open-source and hackathon research report](docs/research/opensource-and-hackathon-research.md) (96 sources) behind features F10–F19.
 
 ## Safety
 
