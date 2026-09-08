@@ -32,7 +32,7 @@ build-backend = "setuptools.build_meta"
 include = ["engine*", "api*", "agent*"]
 
 [tool.pytest.ini_options]
-testpaths = ["engine/tests", "api/tests"]
+testpaths = ["engine/tests", "api/tests", "agent/tests"]
 asyncio_mode = "auto"
 
 [tool.ruff]

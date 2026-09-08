@@ -31,6 +31,7 @@ from api.schemas import (
 )
 from api.settings import Settings, get_settings
 from api.store import SessionNotFound, SessionStore
+from engine.dialogue import awaiting_confirmation, next_line
 from engine.ledger import WordTiming, cut, cut_from_text, estimate_words
 from engine.models import TruthState
 from engine.relay import build as build_relay
@@ -94,9 +95,12 @@ def _settings(request: Request) -> Settings:
 def _snapshot(store: SessionStore, session_id: str, state: TruthState, /, **extra: Any) -> dict[str, Any]:
     """Positional-only so a route can add its own `session_id` key to the payload."""
     stress = store.stress(session_id)
+    line = next_line(state)
     return {
         "state": state.to_dict(),
         "stress": {"tool_delay_ms": stress.tool_delay_ms, "extract_delay_ms": stress.extract_delay_ms},
+        "next_line": line.to_dict() if line else None,
+        "awaiting_confirmation": list(awaiting_confirmation(state)),
         **extra,
     }
 
