@@ -11,7 +11,8 @@ Built for DataForge × Pathway × Rime. Simulated data only. No diagnosis, no pr
 
 ## Read first
 
-- [PLAN.md](PLAN.md) — full analysis, idea, architecture, truth-state model, acceptance tests, build timeline.
+- [PLAN.md](PLAN.md) — full analysis, idea, architecture, truth-state model, acceptance tests, ranked feature backlog, build timeline.
+- [docs/research/](docs/research/) — problem statement, original 4-hour plan, deep-research brief, and facts verified against live Rime/LiveKit sources on 2026-09-08.
 
 ## Layout
 

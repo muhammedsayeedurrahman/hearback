@@ -363,6 +363,62 @@ hearback/
 
 ---
 
+## 11b. High-impact features, ranked
+
+Each feature is scored on rubric impact and build cost. Build in this order once the core success condition passes three times in a row. None of these should start before that.
+
+| # | Feature | Rubric axes hit | Effort | Build when |
+|---|---|---|---|---|
+| F1 | Receiver hear-back (double loop) | Voice necessity, hard engineering, demo | 2 h | Day 2 morning |
+| F2 | ATMIST completeness tracker | Voice necessity, demo, domain credibility | 1.5 h | Day 2 morning |
+| F3 | Fast-path barge-in keywords | Hard engineering, evidence | 1.5 h | Day 2 afternoon |
+| F4 | Criticality tiers with spoken "unverified" tagging | Controlled delivery, Rime integration | 1 h | Day 2 afternoon |
+| F5 | Session replay and "what was heard" audio inspector | Evaluation and observability, evidence | 2 h | Day 2 evening |
+| F6 | Latency budget HUD and filler priming | Perceived response time, evidence | 1.5 h | Day 3 morning |
+| F7 | Siren-noise stress test | Adverse audio conditions, evidence | 1 h | Day 3 morning |
+| F8 | Audible provider fallback | Rime integration rule, cheap | 20 min | Day 2, any gap |
+| F9 | Hindi receiver relay | Multilingual routing | 1 h + listen test | Day 3, only if it passes |
+
+### F1. Receiver hear-back (double loop)
+
+Today the loop closes when the *sender* confirms. Real hear-back closes when the *receiver* repeats the critical value back. After Relay, the agent asks the nurse to repeat the critical facts ("Say back the morphine dose and the allergy"). STT captures the readback, the engine compares against VERIFIED values, and a mismatch flips the fact to CONFLICTED with both values shown. Handover status becomes `RECEIVED` only when both ends match. This makes the product a true firewall on both sides and gives the demo a second "aha" moment. Evidence: 20 scripted readbacks with 5 deliberate mis-hearings, all 5 caught.
+
+### F2. ATMIST completeness tracker
+
+Paramedic handovers follow ATMIST: Age, Time of incident, Mechanism, Injuries, Signs (vitals), Treatment given. The engine maps extracted facts onto these six slots and shows a completeness bar. At the end of the sender's turn the agent asks only for the missing slots ("I have no time of incident. When did it happen?"). This is real domain vocabulary, judges recognise it instantly, and it costs one dictionary plus one prompt. The relay is spoken in ATMIST order.
+
+### F3. Fast-path barge-in keywords
+
+Adaptive interruption waits for the interruption model to decide. We add a second, faster trigger: when STT interim text starts with a correction marker ("wait", "no", "stop", "actually", "correction", "sorry") while the agent is speaking, send the ws3 clear immediately and flush playout, before end-of-turn is detected. Backchannels ("okay", "yeah", "mm-hmm") never trigger it. Evidence: time-to-silence P90 with and without the fast path, plus a 40-utterance backchannel-vs-correction set with false-stop rate. This is the single strongest number in RIME_EVIDENCE.md.
+
+### F4. Criticality tiers with spoken "unverified" tagging
+
+Facts are tiered: **critical** (allergies, drug doses, times of drugs) require readback and confirmation; **informational** (vitals, mechanism, age) can be relayed while still HEARD but the voice says so. The relay text is generated as "Unverified: BP ninety over sixty" for HEARD facts and plain for VERIFIED ones, with a short pause before the tag. Two rendered variants per fact (with and without the tag, same voice and model) are saved as the before/after evidence the PS asks for. Keeps the demo short because only two facts need readback.
+
+### F5. Session replay and "what was heard" audio inspector
+
+Every session records the event log, the user audio, and the agent audio with word timestamps. A Replay button re-feeds the recorded user audio into the engine deterministically and diffs the resulting truth state against the original. The inspector shows agent audio as a waveform with word boundaries and the ledger cutoff drawn on it, so a judge can click the interruption instant and hear exactly where the listener stopped hearing. This is the "Evaluation and observability" path in the PS, and it is what makes T4 (ledger accuracy) reproducible instead of hand-annotated.
+
+### F6. Latency budget HUD and filler priming
+
+Per turn, the status bar shows the four segments: end of user turn → STT final, → LLM first token, → Rime first byte, → first speaker frame. LiveKit exposes these as metrics. Filler priming: as soon as end-of-turn fires, the agent speaks a one-word acknowledgement ("Okay.") from a pre-synthesised Rime clip while the LLM works, then continues. Evidence: perceived-response-time P50/P90 over 50 turns with priming on and off, cold and warm labelled.
+
+### F7. Siren-noise stress test
+
+Mix an ambulance siren and cabin noise track into the user audio at 0, 10 and 20 dB signal-to-noise in the harness. Report STT word error rate on the scenario, false-interruption rate, and whether the fast-path keywords still fire. Negative results are fine and are non-duplicative evidence. No telephony needed.
+
+### F8. Audible provider fallback
+
+When Rime is unreachable, the fallback voice says "Rime unavailable. Fallback voice active." before anything else, the badge turns red, and the event is logged with a timestamp. Twenty minutes of work that satisfies the PS's disclosure rule in a way judges can hear.
+
+### F9. Hindi receiver relay
+
+Unchanged from the stretch goal: Coda `nadi` or `taru`, `lang: hi`, selected by the receiving nurse. Only ships if a five-sentence listen test passes on Day 3. Never in the judged flow otherwise.
+
+### Explicitly not adding
+
+Telephony, EHR, multi-patient, auth, real data, diagnosis, treatment suggestions. Each of these costs more than a day or breaks the safety framing.
+
 ## 12. Risks and mitigations
 
 | Risk | Mitigation |
