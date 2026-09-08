@@ -61,7 +61,7 @@ def test_a_correction_that_cut_into_a_readback_is_reconciled_first():
     state = apply_extraction(state, [Candidate("morphine_dose", "5 mg")], epoch=2, at_ms=1950)
     line = next_line(state)
     assert line.kind == "reconcile"
-    assert "Confirming. Morphine, ten" in line.text and "5 mg" in line.text
+    assert "Confirming. Morphine, ten" in line.text and "5 milligrams" in line.text
 
 
 def test_a_correction_nobody_heard_is_simply_read_back():

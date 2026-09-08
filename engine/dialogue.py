@@ -32,6 +32,7 @@ class Line:
 
     kind: str
     text: str
+    plain: str
     fields: tuple[str, ...]
     inline_speed_alpha: str | None
     critical: bool
@@ -40,6 +41,7 @@ class Line:
         return {
             "kind": self.kind,
             "text": self.text,
+            "plain": self.plain,
             "fields": list(self.fields),
             "inline_speed_alpha": self.inline_speed_alpha,
             "critical": self.critical,
@@ -84,6 +86,7 @@ def _line(kind: str, fact: Fact, readback: Readback | None) -> Line | None:
     return Line(
         kind=kind,
         text=readback.text,
+        plain=readback.plain,
         fields=(fact.field,),
         inline_speed_alpha=readback.inline_speed_alpha,
         critical=readback.critical,

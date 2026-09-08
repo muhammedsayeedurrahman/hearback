@@ -43,6 +43,7 @@ from engine.state import (
     resolve_conflict,
     set_provider,
     verify,
+    verify_unchallenged,
 )
 
 logger = logging.getLogger(__name__)
@@ -146,7 +147,8 @@ def _register_routes(app: FastAPI) -> FastAPI:  # noqa: C901 - one small handler
     async def utterance(req: UtteranceRequest, store: SessionStore = Depends(_store)) -> dict[str, Any]:
         at_ms = _at(store, req.session_id, req.at_ms)
         state = await store.apply(
-            req.session_id, lambda s: next_epoch(s, req.text, at_ms=at_ms, speaker=req.speaker)
+            req.session_id,
+            lambda s: verify_unchallenged(next_epoch(s, req.text, at_ms=at_ms, speaker=req.speaker), at_ms),
         )
         return _snapshot(store, req.session_id, state, epoch=state.epoch)
 
@@ -236,6 +238,7 @@ def _register_routes(app: FastAPI) -> FastAPI:  # noqa: C901 - one small handler
             state,
             relay={
                 "text": relay_text.text,
+                "plain": relay_text.plain,
                 "lang": req.lang,
                 "ready": bool(fields),
                 "fields": fields,

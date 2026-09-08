@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from engine import conflict
 from engine.epoch import is_future, is_stale
+from engine.slots import is_critical
 from engine.models import (
     RELAYABLE,
     VERIFIABLE,
@@ -80,6 +81,27 @@ def _apply_candidate(state: TruthState, cand: Candidate, epoch: int, at_ms: int)
         "fact_corrected", at_ms, epoch=epoch, field=cand.field, old=current.value, new=cand.value,
         old_status=current.status.value,
     )
+
+
+def verify_unchallenged(state: TruthState, at_ms: int) -> TruthState:
+    """Settle non-critical facts the sender heard read back and did not correct.
+
+    Critical facts always need an explicit yes; that is the whole point of the critical tier.
+    For the rest, the agent's acknowledgement is the read-back, and a following turn that does
+    not correct it is the confirmation, which is how a spoken handover actually works.
+    """
+    result = state
+    for field in tuple(state.facts):
+        fact = result.facts[field]
+        if is_critical(field) or fact.status not in {FactStatus.HEARD, FactStatus.INFERRED}:
+            continue
+        if fact.current.delivered is None or fact.current.epoch >= state.epoch:
+            continue
+        settled = Fact(field=field, current=fact.current.with_status(FactStatus.VERIFIED), history=fact.history)
+        result = _put(result, settled).with_event(
+            "fact_verified", at_ms, field=field, value=fact.value, by="unchallenged"
+        )
+    return result
 
 
 def verify(state: TruthState, field: str, at_ms: int, by: str = "sender") -> TruthState:

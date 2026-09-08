@@ -24,6 +24,7 @@ class NextLine:
 
     kind: str
     text: str
+    plain: str
     fields: tuple[str, ...]
     inline_speed_alpha: str | None
     critical: bool
@@ -35,6 +36,7 @@ class NextLine:
         return NextLine(
             kind=raw["kind"],
             text=raw["text"],
+            plain=raw.get("plain") or raw["text"],
             fields=tuple(raw["fields"]),
             inline_speed_alpha=raw.get("inline_speed_alpha"),
             critical=bool(raw.get("critical")),

@@ -76,12 +76,12 @@ def test_reconciliation_falls_back_to_the_old_value_when_nothing_was_delivered()
     s = next_epoch(s, "make it five", at_ms=2)
     s = apply_extraction(s, [Candidate("morphine_dose", "5 mg")], epoch=2, at_ms=3)
     r = reconciliation(s.fact("morphine_dose"))
-    assert r.text == "I had said 10 mg. You're now saying 5 mg. Use 5 mg as final?"
+    assert r.text == "I had said 10 milligrams. You're now saying 5 milligrams. Use 5 milligrams as final?"
 
 
 def test_conflict_prompt_offers_both_values():
     fact = _fact("morphine_dose", "10 mg", more=("5 mg",))
     assert fact.status is FactStatus.CONFLICTED
     r = conflict_prompt(fact)
-    assert r.text == "I heard two values for morphine: 10 mg or 5 mg. Which one is right?"
+    assert r.text == "I heard two values for morphine: 10 milligrams or 5 milligrams. Which one is right?"
     assert conflict_prompt(_fact("bp", "90/60")) is None

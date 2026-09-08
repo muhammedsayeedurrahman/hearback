@@ -1,0 +1,5 @@
+{
+  "description": "Barge-in offsets swept against the critical read-back, in milliseconds from the start of the sentence. Each offset must produce a cutoff word that the reconciliation then quotes back.",
+  "sentence": "Confirming. morphine, spell(morphine), [10] milligrams, spell(10) milligrams. Say yes to confirm.",
+  "offsets_ms": [120, 350, 700, 1100, 1500, 1840, 2200, 2600, 3100, 3600, 4200, 5000]
+}

@@ -29,10 +29,10 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["engine*", "api*", "agent*"]
+include = ["engine*", "api*", "agent*", "sim*"]
 
 [tool.pytest.ini_options]
-testpaths = ["engine/tests", "api/tests", "agent/tests"]
+testpaths = ["engine/tests", "api/tests", "agent/tests", "sim/tests"]
 asyncio_mode = "auto"
 
 [tool.ruff]

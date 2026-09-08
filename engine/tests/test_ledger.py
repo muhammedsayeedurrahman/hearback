@@ -76,7 +76,7 @@ def test_record_delivery_attaches_to_superseded_version_and_reconciles_from_hear
     assert fact.current.delivered is None
     text = reconciliation(fact).text
     assert "Confirming. Morphine, ten" in text
-    assert "5 mg" in text
+    assert "5 milligrams" in text
 
 
 def test_record_delivery_on_current_version():

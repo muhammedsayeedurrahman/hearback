@@ -1,0 +1,14 @@
+{
+  "name": "morphine dose correction",
+  "description": "A paramedic corrects a drug dose mid-read-back. The agent must reconcile against the words the listener actually heard, and relay only the corrected, confirmed value. All patient data is synthetic.",
+  "turns": [
+    {"text": "This is a 34 year old male, fall from height at 14:05, GCS 13."},
+    {"text": "BP is ninety over sixty, sats 91 percent."},
+    {"text": "Yes, that's right."},
+    {"text": "He's allergic to penicillin."},
+    {"text": "Yes, confirmed."},
+    {"text": "We gave morphine ten milligrams."},
+    {"text": "Wait, that was morphine five milligrams.", "barge_in_at_ms": 1300},
+    {"text": "Yes, five milligrams is correct."}
+  ]
+}

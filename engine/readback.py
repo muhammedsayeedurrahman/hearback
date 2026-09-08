@@ -1,9 +1,14 @@
 """Closed-loop readback phrasing for Rime.
 
 Follows the NCC MERP verbal-order rules: numbers stated twice, once as a word and once digit by
-digit; look-alike drug names spelled out. Rime inline controls used: `spell()` for digit-by-digit
-and letter-by-letter delivery, and `[brackets]` so `inlineSpeedAlpha` can slow the number.
-Coda supports no SSML, so these are the only controls.
+digit; look-alike drug names spelled. Rime inline controls used: `spell()` for digit-by-digit and
+letter-by-letter delivery, and `[brackets]` so `inlineSpeedAlpha` can slow the number. Coda
+supports no SSML, so these are the only controls.
+
+Every line is built in two forms at once. `text` carries the control markup and goes to Rime;
+`plain` is the same sentence as words, and it is what the heard-state ledger records. Deriving
+the plain form by stripping markup afterwards would leave the doubled number reading as two
+separate values, so both are generated from the same source instead.
 """
 
 from __future__ import annotations
@@ -39,6 +44,11 @@ class Readback:
     text: str
     inline_speed_alpha: str | None
     critical: bool
+    plain: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.plain:
+            object.__setattr__(self, "plain", self.text)
 
 
 def label(field: str) -> str:
@@ -56,36 +66,53 @@ def spoken_value(field: str, value: str) -> str:
     if pair:
         high, low = pair.group(1), pair.group(2)
         return f"[{high}] over [{low}], spell({high}) over spell({low})"
-    m = _NUM_UNIT.match(value)
-    if not m:
-        return _maybe_spell_drug(field, value)
-    number, unit = m.group(1), m.group(2) or ""
-    unit_word = _unit_word(unit)
+    match = _NUM_UNIT.match(value)
+    if not match:
+        return _maybe_spell_drug(value)
+    number, unit_word = match.group(1), _unit_word(match.group(2) or "")
     digits = number.replace(".", " point ")
     first = f"[{number}] {unit_word}".strip()
     second = f"spell({digits}) {unit_word}".strip()
     return f"{first}, {second}"
 
 
+def plain_value(field: str, value: str) -> str:
+    """The same value as words: what a listener would report having heard."""
+    pair = _PAIR.match(value)
+    if pair:
+        return f"{pair.group(1)} over {pair.group(2)}"
+    match = _NUM_UNIT.match(value)
+    if not match:
+        return value
+    return f"{match.group(1)} {_unit_word(match.group(2) or '')}".strip()
+
+
 def confirm_prompt(fact: Fact) -> Readback:
     """The sentence the agent speaks before a critical fact can become VERIFIED."""
     name = label(fact.field)
-    body = spoken_value(fact.field, fact.value)
     drug = drug_name(fact.field)
     spelled = f" spell({drug}) ," if drug and lasa_partner(drug) else ""
-    text = f"Confirming. {name},{spelled} {body}. Say yes to confirm."
-    return Readback(text=_tidy(text), inline_speed_alpha=NUMBER_SPEED_ALPHA, critical=is_critical(fact.field))
+    return Readback(
+        text=_tidy(f"Confirming. {name},{spelled} {spoken_value(fact.field, fact.value)}. Say yes to confirm."),
+        plain=_tidy(f"Confirming. {name}, {plain_value(fact.field, fact.value)}. Say yes to confirm."),
+        inline_speed_alpha=NUMBER_SPEED_ALPHA,
+        critical=is_critical(fact.field),
+    )
 
 
 def acknowledgement(fact: Fact) -> Readback:
-    name = label(fact.field)
-    text = f"{name.capitalize()} noted as {fact.value}."
-    return Readback(text=_tidy(text), inline_speed_alpha=None, critical=is_critical(fact.field))
+    text = _tidy(f"{label(fact.field).capitalize()} noted as {fact.value}.")
+    return Readback(text=text, plain=text, inline_speed_alpha=None, critical=is_critical(fact.field))
 
 
 def verified_line(fact: Fact) -> Readback:
-    text = f"{label(fact.field).capitalize()}, {spoken_value(fact.field, fact.value)}, verified."
-    return Readback(text=_tidy(text), inline_speed_alpha=NUMBER_SPEED_ALPHA, critical=is_critical(fact.field))
+    name = label(fact.field).capitalize()
+    return Readback(
+        text=_tidy(f"{name}, {spoken_value(fact.field, fact.value)}, verified."),
+        plain=_tidy(f"{name}, {plain_value(fact.field, fact.value)}, verified."),
+        inline_speed_alpha=NUMBER_SPEED_ALPHA,
+        critical=is_critical(fact.field),
+    )
 
 
 def reconciliation(fact: Fact) -> Readback | None:
@@ -93,26 +120,24 @@ def reconciliation(fact: Fact) -> Readback | None:
     if fact.status is not FactStatus.CORRECTED or not fact.history:
         return None
     old = fact.history[-1]
-    heard = old.delivered.text_heard if old.delivered else ""
-    old_said = f"I had said {old.value}" if not heard else f"I had said, {heard}"
-    text = f"{old_said}. You're now saying {fact.value}. Use {fact.value} as final?"
-    return Readback(text=_tidy(text), inline_speed_alpha=None, critical=is_critical(fact.field))
+    heard = (old.delivered.text_heard if old.delivered else "").rstrip(" .,;")
+    new_value = plain_value(fact.field, fact.value)
+    opening = f"I had said {plain_value(fact.field, old.value)}" if not heard else f"I had said, {heard}"
+    text = _tidy(f"{opening}. You're now saying {new_value}. Use {new_value} as final?")
+    return Readback(text=text, plain=text, inline_speed_alpha=None, critical=is_critical(fact.field))
 
 
 def conflict_prompt(fact: Fact) -> Readback | None:
     if fact.status is not FactStatus.CONFLICTED:
         return None
     values = [fact.current.value] + [v.value for v in fact.conflict]
-    joined = " or ".join(values)
-    text = f"I heard two values for {label(fact.field)}: {joined}. Which one is right?"
-    return Readback(text=_tidy(text), inline_speed_alpha=None, critical=is_critical(fact.field))
+    joined = " or ".join(plain_value(fact.field, v) for v in values)
+    text = _tidy(f"I heard two values for {label(fact.field)}: {joined}. Which one is right?")
+    return Readback(text=text, plain=text, inline_speed_alpha=None, critical=is_critical(fact.field))
 
 
-def _maybe_spell_drug(field: str, value: str) -> str:
-    partner = lasa_partner(value)
-    if partner:
-        return f"{value}, spell({value})"
-    return value
+def _maybe_spell_drug(value: str) -> str:
+    return f"{value}, spell({value})" if lasa_partner(value) else value
 
 
 def _unit_word(unit: str) -> str:

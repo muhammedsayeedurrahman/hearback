@@ -124,7 +124,7 @@ class HearbackRunner:
         """Say what the engine asks for, then ask again, until it has nothing more to say."""
         current: NextLine | None = line
         while current is not None:
-            self._tracker.begin(epoch, current.text, current.fields)
+            self._tracker.begin(epoch, current.plain, current.fields)
             allow_interruptions = not (current.critical and UNINTERRUPTIBLE_CRITICAL)
             self._handle = self._session.say(current.text, allow_interruptions=allow_interruptions)
             await self._handle.wait_for_playout()
