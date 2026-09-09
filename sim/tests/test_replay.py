@@ -82,3 +82,13 @@ async def test_a_stale_extraction_cannot_resurrect_a_corrected_dose():
     )
     result = await replay(Scenario(name="race", description="", turns=turns))
     assert result.facts["morphine_dose"]["value"] == "5 mg"
+
+
+async def test_a_confirmation_about_a_different_number_relays_nothing():
+    """End to end: the read-back said ten, the 'yes' said five, so the dose is withheld."""
+    result = await replay(Scenario.load("fixtures/scenario_mishearing.json"))
+
+    assert result.relay["ready"] is False
+    assert "morphine_dose" in result.relay["withheld"]
+    assert result.facts["morphine_dose"]["status"] != "VERIFIED"
+    assert all(step.verified == () for step in result.steps)

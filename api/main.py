@@ -31,9 +31,9 @@ from api.schemas import (
 )
 from api.settings import Settings, get_settings
 from api.store import SessionNotFound, SessionStore
-from engine.dialogue import awaiting_confirmation, next_line
+from engine.dialogue import awaiting_confirmation, is_affirmation, is_negation, next_line
 from engine.ledger import WordTiming, cut, cut_from_text, estimate_words
-from engine.models import TruthState
+from engine.models import FactStatus, TruthState
 from engine.relay import build as build_relay
 from engine.state import (
     TransitionError,
@@ -150,7 +150,19 @@ def _register_routes(app: FastAPI) -> FastAPI:  # noqa: C901 - one small handler
             req.session_id,
             lambda s: verify_unchallenged(next_epoch(s, req.text, at_ms=at_ms, speaker=req.speaker), at_ms),
         )
-        return _snapshot(store, req.session_id, state, epoch=state.epoch)
+        # Whether this turn was a confirmation is a clinical rule, so it is decided here and
+        # reported. Acting on it stays with the speaking client, which alone knows the turn was
+        # spoken rather than typed, and every such client reads the same verdict.
+        return _snapshot(
+            store,
+            req.session_id,
+            state,
+            epoch=state.epoch,
+            confirmation={
+                "affirmation": is_affirmation(req.text),
+                "negation": is_negation(req.text),
+            },
+        )
 
     @app.post("/extract")
     async def extract(
@@ -187,8 +199,22 @@ def _register_routes(app: FastAPI) -> FastAPI:  # noqa: C901 - one small handler
     @app.post("/verify")
     async def verify_field(req: VerifyRequest, store: SessionStore = Depends(_store)) -> dict[str, Any]:
         at_ms = _at(store, req.session_id, req.at_ms)
-        state = await store.apply(req.session_id, lambda s: verify(s, req.field, at_ms=at_ms, by=req.by))
-        return _snapshot(store, req.session_id, state)
+        state = await store.apply(
+            req.session_id,
+            lambda s: verify(s, req.field, at_ms=at_ms, by=req.by, spoken=req.spoken),
+        )
+        fact = state.fact(req.field)
+        challenge = next(
+            (e for e in reversed(state.events) if e.type == "confirmation_challenged"), None
+        )
+        accepted = bool(fact and fact.status is FactStatus.VERIFIED)
+        return _snapshot(
+            store,
+            req.session_id,
+            state,
+            verified=accepted,
+            challenge=None if accepted or challenge is None else challenge.data.get("reason"),
+        )
 
     @app.post("/resolve")
     async def resolve(req: ResolveRequest, store: SessionStore = Depends(_store)) -> dict[str, Any]:

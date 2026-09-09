@@ -1,0 +1,8 @@
+{
+  "name": "confirmation that does not answer the read-back",
+  "description": "The agent reads back ten milligrams in full. The paramedic answers 'yes' — but says five. Both sides believe they agree, and they do not. The engine refuses the confirmation, the dose stays unverified, and nothing crosses the relay gate on the strength of a 'yes' that was about a different number. All patient data is synthetic.",
+  "turns": [
+    {"text": "We gave morphine ten milligrams."},
+    {"text": "Yes, five milligrams is correct."}
+  ]
+}

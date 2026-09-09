@@ -199,3 +199,53 @@ def test_event_stream_can_resume_from_a_sequence_number(client):
             if line.startswith("event: "):
                 seen.append(line.removeprefix("event: ").strip())
     assert seen == ["utterance"]
+
+
+def test_utterance_reports_whether_the_turn_was_a_confirmation(client):
+    session = client.post("/session", json={}).json()["session_id"]
+    plain = client.post("/utterance", json={"session_id": session, "text": "BP is ninety over sixty."})
+    assert plain.json()["confirmation"] == {"affirmation": False, "negation": False}
+
+    yes = client.post("/utterance", json={"session_id": session, "text": "Yes, that's right."})
+    assert yes.json()["confirmation"]["affirmation"] is True
+
+    no = client.post("/utterance", json={"session_id": session, "text": "No, that's wrong."})
+    assert no.json()["confirmation"] == {"affirmation": False, "negation": True}
+
+
+def test_the_sidecar_does_not_verify_on_a_confirmation_by_itself(client):
+    """Only the speaking client knows a 'yes' was spoken rather than typed, so it acts on it."""
+    session = client.post("/session", json={}).json()["session_id"]
+    epoch = client.post("/utterance", json={"session_id": session, "text": "We gave morphine ten milligrams."}).json()["state"]["epoch"]
+    client.post("/extract", json={"session_id": session, "text": "We gave morphine ten milligrams.", "epoch": epoch})
+    client.post("/utterance", json={"session_id": session, "text": "Yes."})
+    state = client.get("/state", params={"session_id": session}).json()["state"]
+    assert state["facts"]["morphine_dose"]["status"] != "VERIFIED"
+
+
+def test_verify_refuses_a_confirmation_that_names_an_unheard_value(client):
+    """The 'yes' says five; the agent read back ten. Nothing may cross the gate on that."""
+    session = client.post("/session", json={}).json()["session_id"]
+    epoch = client.post("/utterance", json={"session_id": session, "text": "We gave morphine ten milligrams."}).json()["state"]["epoch"]
+    client.post("/extract", json={"session_id": session, "text": "We gave morphine ten milligrams.", "epoch": epoch})
+    client.post("/delivery", json={
+        "session_id": session,
+        "field": "morphine_dose",
+        "speech_epoch": epoch,
+        "text": "Confirming. morphine, 10 milligrams. Say yes to confirm.",
+        "duration_ms": 2500,
+    })
+
+    refused = client.post("/verify", json={
+        "session_id": session, "field": "morphine_dose", "spoken": "Yes, five milligrams is correct."
+    }).json()
+    assert refused["verified"] is False
+    assert "never read back" in refused["challenge"]
+    assert refused["state"]["facts"]["morphine_dose"]["status"] != "VERIFIED"
+
+    accepted = client.post("/verify", json={
+        "session_id": session, "field": "morphine_dose", "spoken": "Yes, ten milligrams is correct."
+    }).json()
+    assert accepted["verified"] is True
+    assert accepted["challenge"] is None
+    assert accepted["state"]["facts"]["morphine_dose"]["status"] == "VERIFIED"

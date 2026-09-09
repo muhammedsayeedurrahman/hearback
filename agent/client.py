@@ -114,8 +114,10 @@ class HearbackClient:
         response.raise_for_status()
         return tuple(response.json().get("awaiting_confirmation", ()))
 
-    async def verify(self, field: str, by: str = "sender") -> dict[str, Any]:
-        return await self._post("/verify", self._with_session(field=field, by=by))
+    async def verify(self, field: str, by: str = "sender", spoken: str | None = None) -> dict[str, Any]:
+        """Confirm a read-back. Passing the confirming turn lets the engine refuse it when the
+        turn carries a value the listener was never read back."""
+        return await self._post("/verify", self._with_session(field=field, by=by, spoken=spoken))
 
     async def resolve(self, field: str, value: str, by: str = "sender") -> dict[str, Any]:
         return await self._post("/resolve", self._with_session(field=field, value=value, by=by))

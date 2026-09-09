@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from engine import conflict
+from engine import confirmation, conflict
 from engine.epoch import is_future, is_stale
 from engine.slots import is_critical
 from engine.models import (
@@ -104,10 +104,26 @@ def verify_unchallenged(state: TruthState, at_ms: int) -> TruthState:
     return result
 
 
-def verify(state: TruthState, field: str, at_ms: int, by: str = "sender") -> TruthState:
+def verify(
+    state: TruthState, field: str, at_ms: int, by: str = "sender", spoken: str | None = None
+) -> TruthState:
+    """Settle a fact on an explicit human confirmation.
+
+    When the confirming turn is supplied, it must agree with what was read back: a "yes" carrying a
+    number the listener never heard is a correction wearing an agreement's clothes, and it is
+    refused and logged rather than applied. The fact stays unverified, so the relay gate holds and
+    the value has to be read back again.
+    """
     fact = _require(state, field)
     if fact.status not in VERIFIABLE:
         raise TransitionError(f"{field} is {fact.status.value}; cannot verify")
+
+    challenge = confirmation.challenged_by(fact, spoken) if spoken else None
+    if challenge:
+        return state.with_event(
+            "confirmation_challenged", at_ms, field=field, value=fact.value, by=by, reason=challenge
+        )
+
     verified = Fact(field=field, current=fact.current.with_status(FactStatus.VERIFIED), history=fact.history)
     return _put(state, verified).with_event("fact_verified", at_ms, field=field, value=fact.value, by=by)
 

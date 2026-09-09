@@ -60,6 +60,7 @@ class Scenario:
 @dataclass(frozen=True)
 class Spoken:
     text: str
+    plain: str
     kind: str
     fields: tuple[str, ...]
     cut_at_ms: int | None
@@ -160,12 +161,15 @@ async def _run_turn(client: HearbackClient, turn: Turn, cut_at: int | None) -> S
 
 
 async def _confirm(client: HearbackClient, text: str) -> tuple[str, ...]:
+    """Verify what this turn confirms, and report only what the engine actually settled."""
     if is_negation(text) or not is_affirmation(text):
         return ()
-    pending = await client.awaiting_confirmation()
-    for field_name in pending:
-        await client.verify(field_name)
-    return pending
+    settled = []
+    for field_name in await client.awaiting_confirmation():
+        body = await client.verify(field_name, spoken=text)
+        if body.get("verified"):
+            settled.append(field_name)
+    return tuple(settled)
 
 
 async def _speak(client: HearbackClient, line: NextLine, epoch: int, cut_at: int | None) -> Spoken:
@@ -179,6 +183,7 @@ async def _speak(client: HearbackClient, line: NextLine, epoch: int, cut_at: int
         delivered = body["delivered"]
     return Spoken(
         text=line.text,
+        plain=line.plain,
         kind=line.kind,
         fields=line.fields,
         cut_at_ms=cut_at,

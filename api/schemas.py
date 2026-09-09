@@ -33,6 +33,9 @@ class VerifyRequest(BaseModel):
     field: str = Field(pattern=FIELD_PATTERN)
     by: Literal["sender", "receiver"] = "sender"
     at_ms: int | None = Field(default=None, ge=0)
+    #: The turn that confirmed it, when there was one. Supplying it lets the engine refuse a
+    #: confirmation that carries a value the listener was never read back.
+    spoken: str | None = Field(default=None, max_length=4000)
 
 
 class ResolveRequest(BaseModel):

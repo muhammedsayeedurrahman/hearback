@@ -113,12 +113,19 @@ class HearbackRunner:
             logger.info("heard up to %r on %s", report.delivered.cutoff_word, report.field)
 
     async def _apply_confirmation(self, transcript: str) -> None:
-        """A bare "yes" verifies whatever was just read back. A "no" verifies nothing."""
+        """A bare "yes" verifies whatever was just read back. A "no" verifies nothing.
+
+        The transcript goes with it: a "yes" that names a value the agent never read back is not a
+        confirmation of what was said, and the engine refuses it.
+        """
         if is_negation(transcript) or not is_affirmation(transcript):
             return
         for field in await self._client.awaiting_confirmation():
-            await self._client.verify(field)
-            logger.info("verified %s on confirmation", field)
+            body = await self._client.verify(field, spoken=transcript)
+            if body.get("verified"):
+                logger.info("verified %s on confirmation", field)
+            else:
+                logger.warning("confirmation refused for %s: %s", field, body.get("challenge"))
 
     async def _speak_until_silent(self, line: NextLine, epoch: int) -> None:
         """Say what the engine asks for, then ask again, until it has nothing more to say."""
