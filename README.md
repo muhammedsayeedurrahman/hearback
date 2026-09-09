@@ -106,8 +106,8 @@ ledger. The LLM never decides whether a stale fact is allowed through.
 ## Setup
 
 ```bash
-git clone https://github.com/hameed0342j/hearback-h.git
-cd hearback-h
+git clone https://github.com/muhammedsayeedurrahman/hearback.git
+cd hearback
 uv venv && uv pip install -e ".[dev]"
 ```
 

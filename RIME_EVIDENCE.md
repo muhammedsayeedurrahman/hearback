@@ -194,7 +194,7 @@ Stated plainly, because the gap between these two lists is the whole value of th
 ## 6. How to reproduce every number
 
 ```bash
-git clone https://github.com/hameed0342j/hearback-h.git && cd hearback-h
+git clone https://github.com/muhammedsayeedurrahman/hearback.git && cd hearback
 uv venv && uv pip install -e ".[dev]"
 pytest -q                                     # 183 unit tests
 python scripts/run_scenario.py fixtures/scenario_morphine.json   # the handover, as a transcript
