@@ -42,5 +42,11 @@ async def event_stream(
             yield format_event(event)
     finally:
         if pending is not None:
+            # cancel() only *requests* cancellation. Until the task has actually processed it the
+            # subscription is still executing __anext__, and closing a generator in that state
+            # raises "aclose(): asynchronous generator is already running" - which is what a
+            # browser leaving mid-handover used to put in the log. asyncio.wait returns once the
+            # task is done and, unlike awaiting it, does not re-raise what it was cancelled with.
             pending.cancel()
+            await asyncio.wait({pending})
         await events.aclose()
