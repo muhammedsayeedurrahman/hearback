@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+/*
+ * A handover board, not a chat app. The palette is deliberately flat and cold: the only saturated
+ * colour on the screen belongs to a fact that is not safe to pass on yet, so the eye lands on the
+ * one thing a clinician has to act on.
+ */
+
+@theme {
+  --color-board: #0b0f14;
+  --color-panel: #121820;
+  --color-edge: #1e2733;
+  --color-ink: #e6edf5;
+  --color-muted: #8b9bb0;
+
+  --color-heard: #7aa2c8;
+  --color-inferred: #8b9bb0;
+  --color-corrected: #d9a441;
+  --color-conflicted: #e05c5c;
+  --color-verified: #4ba97a;
+  --color-superseded: #5a6674;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-board);
+  color: var(--color-ink);
+  font-feature-settings: "tnum" 1;
+}
+
+/* Numbers in a handover are read across rows; proportional digits make that harder. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
