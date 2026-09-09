@@ -115,7 +115,7 @@ uv venv && uv pip install -e ".[dev]"
 offline. This is the demo that still works when the venue wi-fi does not:
 
 ```bash
-pytest -q                                                   # 164 tests
+pytest -q                                                   # 183 tests
 python scripts/run_scenario.py fixtures/scenario_morphine.json   # the handover as a transcript
 python scripts/run_evidence.py --all                        # regenerates evidence/RESULTS.md
 
@@ -148,7 +148,7 @@ python scripts/run_evidence.py --all --live   # adds T1, T6 and T5's rendered cl
 | T1 Time-to-silence | P90 ≤ 300 ms from barge-in onset to last audio frame | **not run** — needs `--live` |
 | T2 Stale audio leak | 0 words after the cut recorded as delivered or quoted back | pass, 12/12 offsets |
 | T3 Stale tool fencing | old-epoch result never accepted; re-run applied | pass, 20/20 |
-| T4 Heard-ledger accuracy | ≥ 90 % within ±1 word of annotated cutoff | pass, 24/24 exact |
+| T4 Heard-ledger accuracy | ≥ 90 % within ±1 word of annotated cutoff | pass, 24/24 within ±1 word (23 exact) |
 | T5 Readback delivery controls | every item carries the controls its kind requires | pass, 30/30 |
 | T6 Time-to-first-audio | P50/P90/P99, cold and warm labelled | **not run** — needs `--live` |
 | T7 Provider observability | fallback changes state, emits a reason, reverses | pass |

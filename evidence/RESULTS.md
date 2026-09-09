@@ -1,6 +1,6 @@
 # Evidence results
 
-Generated 2026-09-09 16:44:40Z · commit `3681bc4` · mode: offline (no keys, no network)
+Generated 2026-09-09 17:13:57Z · commit `767afcb` · mode: offline (no keys, no network)
 
 Regenerate with `python scripts/run_evidence.py --all` (add `--live` with a Rime key for T1, T6 and the audio half of T5).
 
@@ -50,7 +50,7 @@ Regenerate with `python scripts/run_evidence.py --all` (add `--live` with a Rime
 | clean_runs | 20 |
 | tool_delay_ms | 3000 |
 | correction_at_ms | 1000 |
-| wall_clock_s | 60.2 |
+| wall_clock_s | 60.3 |
 
 ## T4 — Heard-ledger accuracy
 

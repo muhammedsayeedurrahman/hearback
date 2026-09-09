@@ -78,14 +78,14 @@ strength of a simulation.
 
 ## 4. Results
 
-From `evidence/results.json`, commit `3681bc4`, offline mode.
+From `evidence/results.json`, commit `767afcb`, offline mode.
 
 | # | Test | Pass criterion | Result | Status |
 |---|---|---|---|---|
 | T1 | Time-to-silence | P90 ≤ 300 ms, barge-in to last audio frame | — | **NOT RUN** (needs `--live`) |
 | T2 | Stale audio leak | 0 words after the cut recorded as delivered or quoted back | 12 / 12 offsets clean, 0 leaked words | **PASS** |
 | T3 | Stale tool fencing | old-epoch tool result never accepted; re-run applied | 20 / 20 runs clean | **PASS** |
-| T4 | Heard-ledger accuracy | ≥ 90 % of cutoffs within ±1 word of annotation | 24 / 24 exact (100 %) | **PASS** |
+| T4 | Heard-ledger accuracy | ≥ 90 % of cutoffs within ±1 word of annotation | 24 / 24 within ±1 word, 23 exact | **PASS** |
 | T5 | Readback delivery controls | every item carries the controls its kind requires | 30 / 30 conforming | **PASS** |
 | T6 | Time-to-first-audio | report P50/P90/P99, cold and warm | — | **NOT RUN** (needs `--live`) |
 | T7 | Provider observability | fallback changes state, emits an event with a reason, reverses | 1 / 1 | **PASS** |
@@ -113,7 +113,15 @@ integer comparison in `engine/epoch.py`; no model is consulted.
 
 Four sentences with Rime-shaped word timestamps, 24 hand-annotated cutoffs, including three
 deliberate boundary cases: an interruption exactly on a word onset, one 10 ms before an onset, and
-one before any word has begun. All 24 matched exactly, so the ±1 word tolerance was never needed.
+one before any word has begun. All 24 fell within ±1 word and 23 matched the annotated word
+exactly, so the criterion is met with one cutoff inside the tolerance rather than on it.
+
+That one is L3 — *"M R N noted as A four seven two nine one three."* — cut at 1,900 ms. `A` ends at
+1,800 ms and `four` begins at 1,860 ms, so the cut lands 40 ms into `four`. The ledger counts a word
+as delivered once its onset has passed and reports `four`; the annotation says `A`, on the judgement
+that 40 ms of a word is not something a listener heard. The disagreement is the convention at a word
+boundary, not an arithmetic error, and it is recorded in `evidence/results.json` under T4's
+`failures` rather than smoothed away.
 
 This measures the ledger arithmetic against annotations, not Rime's timestamp accuracy. Real
 timestamps are what `scripts/rime_preflight.py --probe` fetches, and whether Coda emits them over
@@ -188,7 +196,7 @@ Stated plainly, because the gap between these two lists is the whole value of th
 ```bash
 git clone https://github.com/hameed0342j/hearback-h.git && cd hearback-h
 uv venv && uv pip install -e ".[dev]"
-pytest -q                                     # 164 unit tests
+pytest -q                                     # 183 unit tests
 python scripts/run_scenario.py fixtures/scenario_morphine.json   # the handover, as a transcript
 python scripts/stress_barge_in.py             # the barge-in sweep on its own
 python scripts/run_evidence.py --all          # regenerates evidence/results.json and RESULTS.md
