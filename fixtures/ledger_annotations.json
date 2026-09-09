@@ -1,0 +1,66 @@
+{
+  "description": "Hand-annotated cutoffs for T4. Each sentence carries Rime ws3 word timestamps in seconds (the shape a `timestamps` frame returns: index-aligned words/start/end). For each barge-in offset a human annotated the last word the listener would report having heard, applying one rule: a word counts as heard once it has begun playing, because a listener cut halfway through 'ten' has still heard 'ten'. Boundary cases are included deliberately — an offset falling exactly on a word onset means that word had not yet begun.",
+  "expected_word_null_means": "the barge-in landed before any word began; nothing was delivered",
+  "sentences": [
+    {
+      "id": "L1",
+      "text": "Confirming. morphine, ten milligrams, Say yes to confirm.",
+      "words": ["Confirming.", "morphine,", "ten", "milligrams,", "Say", "yes", "to", "confirm."],
+      "start": [0.00, 0.62, 1.05, 1.34, 2.05, 2.36, 2.58, 2.74],
+      "end": [0.58, 1.02, 1.30, 1.98, 2.32, 2.54, 2.70, 3.20],
+      "cuts": [
+        {"offset_ms": 0, "expected_word": null, "note": "cut on the onset of the first word"},
+        {"offset_ms": 300, "expected_word": "Confirming."},
+        {"offset_ms": 1100, "expected_word": "ten", "note": "cut inside the number that matters"},
+        {"offset_ms": 1340, "expected_word": "ten", "note": "exactly on the next onset"},
+        {"offset_ms": 2000, "expected_word": "milligrams,"},
+        {"offset_ms": 3300, "expected_word": "confirm.", "note": "sentence finished before the cut"}
+      ]
+    },
+    {
+      "id": "L2",
+      "text": "Confirming. blood pressure, ninety over sixty. Say yes to confirm.",
+      "words": ["Confirming.", "blood", "pressure,", "ninety", "over", "sixty.", "Say", "yes", "to", "confirm."],
+      "start": [0.00, 0.55, 0.82, 1.40, 1.78, 2.02, 2.55, 2.86, 3.08, 3.24],
+      "end": [0.52, 0.79, 1.36, 1.74, 1.98, 2.50, 2.82, 3.04, 3.20, 3.70],
+      "cuts": [
+        {"offset_ms": 500, "expected_word": "Confirming.", "note": "before the second onset at 550 ms"},
+        {"offset_ms": 900, "expected_word": "pressure,"},
+        {"offset_ms": 1500, "expected_word": "ninety", "note": "the systolic was heard, the diastolic was not"},
+        {"offset_ms": 1900, "expected_word": "over"},
+        {"offset_ms": 2100, "expected_word": "sixty."},
+        {"offset_ms": 4000, "expected_word": "confirm."}
+      ]
+    },
+    {
+      "id": "L3",
+      "text": "M R N noted as A four seven two nine one three.",
+      "words": ["M", "R", "N", "noted", "as", "A", "four", "seven", "two", "nine", "one", "three."],
+      "start": [0.00, 0.30, 0.60, 0.92, 1.22, 1.50, 1.86, 2.20, 2.58, 2.92, 3.24, 3.56],
+      "end": [0.26, 0.56, 0.88, 1.18, 1.46, 1.80, 2.16, 2.54, 2.88, 3.20, 3.52, 4.00],
+      "cuts": [
+        {"offset_ms": 100, "expected_word": "M"},
+        {"offset_ms": 700, "expected_word": "N"},
+        {"offset_ms": 1900, "expected_word": "A", "note": "the code had barely started"},
+        {"offset_ms": 2600, "expected_word": "two"},
+        {"offset_ms": 3300, "expected_word": "one"},
+        {"offset_ms": 4200, "expected_word": "three."}
+      ]
+    },
+    {
+      "id": "L4",
+      "text": "I had said, Confirming. morphine, ten. You're now saying five milligrams.",
+      "words": ["I", "had", "said,", "Confirming.", "morphine,", "ten.", "You're", "now", "saying", "five", "milligrams."],
+      "start": [0.00, 0.22, 0.46, 0.90, 1.48, 1.92, 2.30, 2.60, 2.84, 3.24, 3.52],
+      "end": [0.18, 0.42, 0.86, 1.44, 1.88, 2.26, 2.56, 2.80, 3.20, 3.48, 4.10],
+      "cuts": [
+        {"offset_ms": 50, "expected_word": "I"},
+        {"offset_ms": 450, "expected_word": "had", "note": "10 ms before the third onset"},
+        {"offset_ms": 1000, "expected_word": "Confirming."},
+        {"offset_ms": 2000, "expected_word": "ten.", "note": "the value the reconciliation must quote"},
+        {"offset_ms": 3000, "expected_word": "saying"},
+        {"offset_ms": 3600, "expected_word": "milligrams."}
+      ]
+    }
+  ]
+}

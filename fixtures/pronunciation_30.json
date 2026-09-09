@@ -1,0 +1,49 @@
+{
+  "description": "Thirty read-back items for T5. Variant A is the value as plain words; variant B adds the only two delivery controls Coda supports — spell() for characters and [brackets] for inlineSpeedAlpha to slow a number. Items are chosen for the four ways a spoken clinical value is misheard: look-alike drug names (ISMP confused-drug list), doses whose digits carry the risk, alphanumeric codes with no redundancy, and names outside the recogniser's usual distribution. All patient data is synthetic.",
+  "variants": {
+    "A": "the sentence as plain words — what a listener would report hearing",
+    "B": "the same sentence with Rime's delivery controls: spell() and [brackets] for inlineSpeedAlpha"
+  },
+  "kinds": {
+    "dose": "number and unit; B must bracket the number and repeat it with spell()",
+    "lasa_dose": "dose whose drug name is on the ISMP look-alike list; B must also spell the drug",
+    "pair": "paired reading; B must say 'over', never 'slash', and bracket both halves",
+    "number": "critical number; B must bracket it and repeat it with spell()",
+    "noted": "non-critical number; it is noted rather than read back, so B must stay plain",
+    "code": "alphanumeric identifier; B must be spell() of the whole code",
+    "name": "person's name; B must add no markup — spelling a name is worse, not better",
+    "time": "clock time; B must add no markup"
+  },
+  "items": [
+    {"id": "p01", "field": "morphine_dose", "value": "5 mg", "kind": "lasa_dose", "lasa_partner": "hydromorphone"},
+    {"id": "p02", "field": "hydromorphone_dose", "value": "0.5 mg", "kind": "lasa_dose", "lasa_partner": "morphine"},
+    {"id": "p03", "field": "metoprolol_dose", "value": "5 mg", "kind": "lasa_dose", "lasa_partner": "misoprostol"},
+    {"id": "p04", "field": "amiodarone_dose", "value": "300 mg", "kind": "lasa_dose", "lasa_partner": "amantadine"},
+    {"id": "p05", "field": "ketamine_dose", "value": "50 mg", "kind": "lasa_dose", "lasa_partner": "ketorolac"},
+    {"id": "p06", "field": "tramadol_dose", "value": "100 mg", "kind": "lasa_dose", "lasa_partner": "trazodone"},
+    {"id": "p07", "field": "clonidine_dose", "value": "150 mcg", "kind": "lasa_dose", "lasa_partner": "clonazepam"},
+    {"id": "p08", "field": "dopamine_dose", "value": "5 mcg", "kind": "lasa_dose", "lasa_partner": "dobutamine"},
+    {"id": "p09", "field": "paracetamol_dose", "value": "1 g", "kind": "dose"},
+    {"id": "p10", "field": "adrenaline_dose", "value": "1 mg", "kind": "dose"},
+    {"id": "p11", "field": "tranexamic_acid_dose", "value": "1 g", "kind": "dose"},
+    {"id": "p12", "field": "naloxone_dose", "value": "400 mcg", "kind": "dose"},
+    {"id": "p13", "field": "bp", "value": "90/60", "kind": "pair"},
+    {"id": "p14", "field": "bp", "value": "180/110", "kind": "pair"},
+    {"id": "p15", "field": "spo2", "value": "91%", "kind": "number"},
+    {"id": "p16", "field": "spo2", "value": "88%", "kind": "number"},
+    {"id": "p17", "field": "hr", "value": "128", "kind": "noted"},
+    {"id": "p18", "field": "rr", "value": "28", "kind": "noted"},
+    {"id": "p19", "field": "gcs", "value": "13", "kind": "noted"},
+    {"id": "p20", "field": "temperature", "value": "38.4 C", "kind": "noted"},
+    {"id": "p21", "field": "mrn", "value": "A472913", "kind": "code"},
+    {"id": "p22", "field": "mrn", "value": "KJ08421", "kind": "code"},
+    {"id": "p23", "field": "nhs_number", "value": "4857662130", "kind": "code"},
+    {"id": "p24", "field": "unit_code", "value": "AMB14", "kind": "code"},
+    {"id": "p25", "field": "bed", "value": "12B", "kind": "code"},
+    {"id": "p26", "field": "ambulance_id", "value": "X9", "kind": "code"},
+    {"id": "p27", "field": "patient_name", "value": "Priya Venkataraman", "kind": "name"},
+    {"id": "p28", "field": "patient_name", "value": "Aarav Chatterjee", "kind": "name"},
+    {"id": "p29", "field": "patient_name", "value": "Rukmini Balasubramanian", "kind": "name"},
+    {"id": "p30", "field": "time_of_incident", "value": "14:05", "kind": "time"}
+  ]
+}

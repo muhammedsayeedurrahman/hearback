@@ -1,0 +1,380 @@
+{
+  "meta": {
+    "generated_utc": "2026-09-09 16:44:40Z",
+    "commit": "3681bc4",
+    "mode": "offline (no keys, no network)",
+    "headline_claim": "When a clinician corrects the agent while it is speaking or while a tool is running, the stale answer never reaches the listener: audio for the superseded utterance is cancelled at Rime, the record of what was heard is cut at the last word actually delivered, obsolete tool results are dropped by epoch arithmetic, and only values a human explicitly confirmed are relayed to the receiving clinician."
+  },
+  "results": [
+    {
+      "id": "T1",
+      "name": "Time-to-silence",
+      "criterion": "P90 <= 300 ms from barge-in to the last audio frame",
+      "status": "NOT RUN",
+      "how": "not attempted",
+      "runs": 0,
+      "measured": {},
+      "failures": [],
+      "note": "needs live audio from Rime: run with --live and RIME_API_KEY set"
+    },
+    {
+      "id": "T2",
+      "name": "Stale audio leak",
+      "criterion": "0 words after the cut are recorded as delivered or quoted back",
+      "status": "PASS",
+      "how": "simulated playout; delivery records and reconciliation text inspected per offset",
+      "runs": 12,
+      "measured": {
+        "offsets": [
+          120,
+          350,
+          700,
+          1100,
+          1500,
+          1840,
+          2200,
+          2600,
+          3100,
+          3600,
+          4200,
+          5000
+        ],
+        "leaked_words": 0,
+        "clean_runs": 12
+      },
+      "failures": [],
+      "note": "Each offset is run once: the replay is deterministic, so repeating an identical run adds no information. Audio-path evidence (re-transcribing what left the speaker) needs --live; this is the state-path half of the same claim."
+    },
+    {
+      "id": "T3",
+      "name": "Stale tool fencing",
+      "criterion": "old-epoch tool result never accepted; re-run under the new epoch applied",
+      "status": "PASS",
+      "how": "in-process sidecar; tool delayed 3000 ms, correction at 1000 ms",
+      "runs": 20,
+      "measured": {
+        "clean_runs": 20,
+        "tool_delay_ms": 3000,
+        "correction_at_ms": 1000,
+        "wall_clock_s": 60.2
+      },
+      "failures": [],
+      "note": ""
+    },
+    {
+      "id": "T4",
+      "name": "Heard-ledger accuracy",
+      "criterion": ">= 90% of cutoffs within +/-1 word of the annotation",
+      "status": "PASS",
+      "how": "Rime-shaped word timestamps from fixtures; annotations written by hand",
+      "runs": 24,
+      "measured": {
+        "annotated_cuts": 24,
+        "exact": 23,
+        "within_one_word": 24,
+        "within_one_rate": 1.0
+      },
+      "failures": [
+        {
+          "sentence": "L3",
+          "offset_ms": 1900,
+          "expected": "A",
+          "got": "four",
+          "words_off": 1
+        }
+      ],
+      "note": "Timings are fixtures, not a live synthesis: this measures the ledger arithmetic, not Rime's timestamp accuracy. --live records real timings via scripts/rime_preflight.py --probe."
+    },
+    {
+      "id": "T5",
+      "name": "Readback delivery controls",
+      "criterion": "every item carries the controls its kind requires; variant A stays plain",
+      "status": "PASS",
+      "how": "markup conformance over the 30-item pronunciation fixture",
+      "runs": 30,
+      "measured": {
+        "items": 30,
+        "conforming": 30,
+        "rules": {
+          "lasa_dose": "spells the drug and brackets the number",
+          "dose": "brackets the number and repeats it with spell()",
+          "pair": "says 'over' and brackets both halves",
+          "number": "brackets the number and repeats it with spell()",
+          "noted": "is noted rather than read back, so it stays plain",
+          "code": "spells the whole code",
+          "name": "adds no markup",
+          "time": "adds no markup"
+        },
+        "rendered": [
+          {
+            "id": "p01",
+            "field": "morphine_dose",
+            "value": "5 mg",
+            "kind": "lasa_dose",
+            "A": "Confirming. morphine, 5 milligrams. Say yes to confirm.",
+            "B": "Confirming. morphine, spell(morphine), [5] milligrams, spell(5) milligrams. Say yes to confirm."
+          },
+          {
+            "id": "p02",
+            "field": "hydromorphone_dose",
+            "value": "0.5 mg",
+            "kind": "lasa_dose",
+            "A": "Confirming. hydromorphone, 0.5 milligrams. Say yes to confirm.",
+            "B": "Confirming. hydromorphone, spell(hydromorphone), [0.5] milligrams, spell(0 point 5) milligrams. Say yes to confirm."
+          },
+          {
+            "id": "p03",
+            "field": "metoprolol_dose",
+            "value": "5 mg",
+            "kind": "lasa_dose",
+            "A": "Confirming. metoprolol, 5 milligrams. Say yes to confirm.",
+            "B": "Confirming. metoprolol, spell(metoprolol), [5] milligrams, spell(5) milligrams. Say yes to confirm."
+          },
+          {
+            "id": "p04",
+            "field": "amiodarone_dose",
+            "value": "300 mg",
+            "kind": "lasa_dose",
+            "A": "Confirming. amiodarone, 300 milligrams. Say yes to confirm.",
+            "B": "Confirming. amiodarone, spell(amiodarone), [300] milligrams, spell(300) milligrams. Say yes to confirm."
+          },
+          {
+            "id": "p05",
+            "field": "ketamine_dose",
+            "value": "50 mg",
+            "kind": "lasa_dose",
+            "A": "Confirming. ketamine, 50 milligrams. Say yes to confirm.",
+            "B": "Confirming. ketamine, spell(ketamine), [50] milligrams, spell(50) milligrams. Say yes to confirm."
+          },
+          {
+            "id": "p06",
+            "field": "tramadol_dose",
+            "value": "100 mg",
+            "kind": "lasa_dose",
+            "A": "Confirming. tramadol, 100 milligrams. Say yes to confirm.",
+            "B": "Confirming. tramadol, spell(tramadol), [100] milligrams, spell(100) milligrams. Say yes to confirm."
+          },
+          {
+            "id": "p07",
+            "field": "clonidine_dose",
+            "value": "150 mcg",
+            "kind": "lasa_dose",
+            "A": "Confirming. clonidine, 150 micrograms. Say yes to confirm.",
+            "B": "Confirming. clonidine, spell(clonidine), [150] micrograms, spell(150) micrograms. Say yes to confirm."
+          },
+          {
+            "id": "p08",
+            "field": "dopamine_dose",
+            "value": "5 mcg",
+            "kind": "lasa_dose",
+            "A": "Confirming. dopamine, 5 micrograms. Say yes to confirm.",
+            "B": "Confirming. dopamine, spell(dopamine), [5] micrograms, spell(5) micrograms. Say yes to confirm."
+          },
+          {
+            "id": "p09",
+            "field": "paracetamol_dose",
+            "value": "1 g",
+            "kind": "dose",
+            "A": "Confirming. paracetamol, 1 grams. Say yes to confirm.",
+            "B": "Confirming. paracetamol, [1] grams, spell(1) grams. Say yes to confirm."
+          },
+          {
+            "id": "p10",
+            "field": "adrenaline_dose",
+            "value": "1 mg",
+            "kind": "dose",
+            "A": "Confirming. adrenaline, 1 milligrams. Say yes to confirm.",
+            "B": "Confirming. adrenaline, [1] milligrams, spell(1) milligrams. Say yes to confirm."
+          },
+          {
+            "id": "p11",
+            "field": "tranexamic_acid_dose",
+            "value": "1 g",
+            "kind": "dose",
+            "A": "Confirming. tranexamic acid, 1 grams. Say yes to confirm.",
+            "B": "Confirming. tranexamic acid, [1] grams, spell(1) grams. Say yes to confirm."
+          },
+          {
+            "id": "p12",
+            "field": "naloxone_dose",
+            "value": "400 mcg",
+            "kind": "dose",
+            "A": "Confirming. naloxone, 400 micrograms. Say yes to confirm.",
+            "B": "Confirming. naloxone, [400] micrograms, spell(400) micrograms. Say yes to confirm."
+          },
+          {
+            "id": "p13",
+            "field": "bp",
+            "value": "90/60",
+            "kind": "pair",
+            "A": "Confirming. blood pressure, 90 over 60. Say yes to confirm.",
+            "B": "Confirming. blood pressure, [90] over [60], spell(90) over spell(60). Say yes to confirm."
+          },
+          {
+            "id": "p14",
+            "field": "bp",
+            "value": "180/110",
+            "kind": "pair",
+            "A": "Confirming. blood pressure, 180 over 110. Say yes to confirm.",
+            "B": "Confirming. blood pressure, [180] over [110], spell(180) over spell(110). Say yes to confirm."
+          },
+          {
+            "id": "p15",
+            "field": "spo2",
+            "value": "91%",
+            "kind": "number",
+            "A": "Confirming. oxygen saturation, 91 percent. Say yes to confirm.",
+            "B": "Confirming. oxygen saturation, [91] percent, spell(91) percent. Say yes to confirm."
+          },
+          {
+            "id": "p16",
+            "field": "spo2",
+            "value": "88%",
+            "kind": "number",
+            "A": "Confirming. oxygen saturation, 88 percent. Say yes to confirm.",
+            "B": "Confirming. oxygen saturation, [88] percent, spell(88) percent. Say yes to confirm."
+          },
+          {
+            "id": "p17",
+            "field": "hr",
+            "value": "128",
+            "kind": "noted",
+            "A": "Heart rate noted as 128.",
+            "B": "Heart rate noted as 128."
+          },
+          {
+            "id": "p18",
+            "field": "rr",
+            "value": "28",
+            "kind": "noted",
+            "A": "Respiratory rate noted as 28.",
+            "B": "Respiratory rate noted as 28."
+          },
+          {
+            "id": "p19",
+            "field": "gcs",
+            "value": "13",
+            "kind": "noted",
+            "A": "G C S noted as 13.",
+            "B": "G C S noted as 13."
+          },
+          {
+            "id": "p20",
+            "field": "temperature",
+            "value": "38.4 C",
+            "kind": "noted",
+            "A": "Temperature noted as 38.4 C.",
+            "B": "Temperature noted as 38.4 C."
+          },
+          {
+            "id": "p21",
+            "field": "mrn",
+            "value": "A472913",
+            "kind": "code",
+            "A": "M R N noted as A 4 7 2 9 1 3.",
+            "B": "M R N noted as spell(A472913)."
+          },
+          {
+            "id": "p22",
+            "field": "mrn",
+            "value": "KJ08421",
+            "kind": "code",
+            "A": "M R N noted as K J 0 8 4 2 1.",
+            "B": "M R N noted as spell(KJ08421)."
+          },
+          {
+            "id": "p23",
+            "field": "nhs_number",
+            "value": "4857662130",
+            "kind": "code",
+            "A": "Nhs number noted as 4 8 5 7 6 6 2 1 3 0.",
+            "B": "Nhs number noted as spell(4857662130)."
+          },
+          {
+            "id": "p24",
+            "field": "unit_code",
+            "value": "AMB14",
+            "kind": "code",
+            "A": "Unit code noted as A M B 1 4.",
+            "B": "Unit code noted as spell(AMB14)."
+          },
+          {
+            "id": "p25",
+            "field": "bed",
+            "value": "12B",
+            "kind": "code",
+            "A": "Bed noted as 1 2 B.",
+            "B": "Bed noted as spell(12B)."
+          },
+          {
+            "id": "p26",
+            "field": "ambulance_id",
+            "value": "X9",
+            "kind": "code",
+            "A": "Ambulance id noted as X 9.",
+            "B": "Ambulance id noted as spell(X9)."
+          },
+          {
+            "id": "p27",
+            "field": "patient_name",
+            "value": "Priya Venkataraman",
+            "kind": "name",
+            "A": "Patient name noted as Priya Venkataraman.",
+            "B": "Patient name noted as Priya Venkataraman."
+          },
+          {
+            "id": "p28",
+            "field": "patient_name",
+            "value": "Aarav Chatterjee",
+            "kind": "name",
+            "A": "Patient name noted as Aarav Chatterjee.",
+            "B": "Patient name noted as Aarav Chatterjee."
+          },
+          {
+            "id": "p29",
+            "field": "patient_name",
+            "value": "Rukmini Balasubramanian",
+            "kind": "name",
+            "A": "Patient name noted as Rukmini Balasubramanian.",
+            "B": "Patient name noted as Rukmini Balasubramanian."
+          },
+          {
+            "id": "p30",
+            "field": "time_of_incident",
+            "value": "14:05",
+            "kind": "time",
+            "A": "Time of incident noted as 14:05.",
+            "B": "Time of incident noted as 14:05."
+          }
+        ]
+      },
+      "failures": [],
+      "note": "Intelligibility (digit error rate on re-transcribed audio) needs Rime and an STT: run with --live and DEEPGRAM_API_KEY set."
+    },
+    {
+      "id": "T6",
+      "name": "Time-to-first-audio",
+      "criterion": "report P50/P90/P99; cold and warm labelled separately (no target)",
+      "status": "NOT RUN",
+      "how": "not attempted",
+      "runs": 0,
+      "measured": {},
+      "failures": [],
+      "note": "needs live audio from Rime: run with --live and RIME_API_KEY set"
+    },
+    {
+      "id": "T7",
+      "name": "Provider observability",
+      "criterion": "fallback changes the state, emits an event with a reason, and is reversible",
+      "status": "PASS",
+      "how": "in-process sidecar; /provider driven and the SSE backlog read back",
+      "runs": 1,
+      "measured": {
+        "events_seen": 2,
+        "provider_events": 2
+      },
+      "failures": [],
+      "note": "The audible half \u2014 the fallback voice announcing itself \u2014 is a browser behaviour and is shown in the demo recording, not measured here."
+    }
+  ]
+}
