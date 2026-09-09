@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from engine.models import Fact, TruthState
-from engine.readback import NUMBER_SPEED_ALPHA, label, plain_value, spoken_value
-from engine.slots import completeness, is_critical, ordered_fields
+from engine.readback import NUMBER_SPEED_ALPHA, display_label, plain_value, spoken_value
+from engine.slots import completeness, is_critical, is_identifier, ordered_fields
 from engine.state import pending, relayable
 
 EMPTY_RELAY = "No verified facts to relay yet."
@@ -47,8 +47,8 @@ def _intro(lang: str) -> str:
 
 def _line(fact: Fact, plain: bool = False) -> str:
     """The relay is built twice: marked up for Rime, and as words for the record."""
-    name = label(fact.field).capitalize()
-    if not is_critical(fact.field):
+    name = display_label(fact.field)
+    if not (is_critical(fact.field) or is_identifier(fact.field)):
         return f"{name}, {fact.value}."
     render = plain_value if plain else spoken_value
     return f"{name}, {render(fact.field, fact.value)}."

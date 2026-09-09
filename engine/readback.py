@@ -17,7 +17,7 @@ import re
 from dataclasses import dataclass
 
 from engine.models import Fact, FactStatus
-from engine.slots import drug_name, is_critical, lasa_partner
+from engine.slots import drug_name, is_critical, is_identifier, lasa_partner
 
 FIELD_LABELS: dict[str, str] = {
     "bp": "blood pressure",
@@ -60,8 +60,16 @@ def label(field: str) -> str:
     return field.replace("_", " ")
 
 
+def display_label(field: str) -> str:
+    """Sentence case that survives an initialism: 'G C S' must not become 'G c s'."""
+    name = label(field)
+    return name[:1].upper() + name[1:]
+
+
 def spoken_value(field: str, value: str) -> str:
     """Render a value the NCC MERP way: '[5] milligrams, spell(5) milligrams'."""
+    if is_identifier(field):
+        return f"spell({value})"
     pair = _PAIR.match(value)
     if pair:
         high, low = pair.group(1), pair.group(2)
@@ -78,6 +86,8 @@ def spoken_value(field: str, value: str) -> str:
 
 def plain_value(field: str, value: str) -> str:
     """The same value as words: what a listener would report having heard."""
+    if is_identifier(field):
+        return spaced(value)
     pair = _PAIR.match(value)
     if pair:
         return f"{pair.group(1)} over {pair.group(2)}"
@@ -101,12 +111,21 @@ def confirm_prompt(fact: Fact) -> Readback:
 
 
 def acknowledgement(fact: Fact) -> Readback:
-    text = _tidy(f"{label(fact.field).capitalize()} noted as {fact.value}.")
+    """Non-critical facts are noted, not read back — except codes, which are always spelled."""
+    name = display_label(fact.field)
+    if is_identifier(fact.field):
+        return Readback(
+            text=_tidy(f"{name} noted as {spoken_value(fact.field, fact.value)}."),
+            plain=_tidy(f"{name} noted as {plain_value(fact.field, fact.value)}."),
+            inline_speed_alpha=None,
+            critical=is_critical(fact.field),
+        )
+    text = _tidy(f"{name} noted as {fact.value}.")
     return Readback(text=text, plain=text, inline_speed_alpha=None, critical=is_critical(fact.field))
 
 
 def verified_line(fact: Fact) -> Readback:
-    name = label(fact.field).capitalize()
+    name = display_label(fact.field)
     return Readback(
         text=_tidy(f"{name}, {spoken_value(fact.field, fact.value)}, verified."),
         plain=_tidy(f"{name}, {plain_value(fact.field, fact.value)}, verified."),
@@ -134,6 +153,11 @@ def conflict_prompt(fact: Fact) -> Readback | None:
     joined = " or ".join(plain_value(fact.field, v) for v in values)
     text = _tidy(f"I heard two values for {label(fact.field)}: {joined}. Which one is right?")
     return Readback(text=text, plain=text, inline_speed_alpha=None, critical=is_critical(fact.field))
+
+
+def spaced(value: str) -> str:
+    """'A472913' as a listener would report hearing it, character by character."""
+    return " ".join(ch.upper() for ch in value if not ch.isspace())
 
 
 def _maybe_spell_drug(value: str) -> str:

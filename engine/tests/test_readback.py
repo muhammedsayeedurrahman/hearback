@@ -85,3 +85,29 @@ def test_conflict_prompt_offers_both_values():
     r = conflict_prompt(fact)
     assert r.text == "I heard two values for morphine: 10 milligrams or 5 milligrams. Which one is right?"
     assert conflict_prompt(_fact("bp", "90/60")) is None
+
+
+# --- identifiers and initialisms ------------------------------------------------------
+
+
+def test_a_code_is_spelled_character_by_character():
+    fact = _fact("mrn", "A472913")
+    line = acknowledgement(fact)
+    assert "spell(A472913)" in line.text
+    assert "A 4 7 2 9 1 3" in line.plain
+
+
+def test_the_plain_form_of_a_code_carries_no_markup():
+    line = acknowledgement(_fact("unit_code", "AMB14"))
+    assert "spell(" not in line.plain
+    assert "[" not in line.plain
+
+
+def test_an_initialism_keeps_its_capitals_in_a_sentence():
+    assert acknowledgement(_fact("gcs", "13")).text.startswith("G C S")
+    assert acknowledgement(_fact("mrn", "A1")).text.startswith("M R N")
+
+
+def test_a_name_is_never_spelled():
+    line = acknowledgement(_fact("patient_name", "Priya Venkataraman"))
+    assert line.text == line.plain == "Patient name noted as Priya Venkataraman."

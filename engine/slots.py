@@ -46,6 +46,10 @@ _FIELD_TO_SLOT: dict[str, str] = {
 CRITICAL_FIELDS: frozenset[str] = frozenset({"allergy", "airway", "spo2", "bp"})
 CRITICAL_SUFFIXES: tuple[str, ...] = ("_dose", "_drug_time")
 
+# Codes that are misheard as other codes rather than misunderstood as words. They are read out
+# character by character with Rime's spell(), which is the only inline control Coda supports.
+IDENTIFIER_FIELDS: frozenset[str] = frozenset({"mrn", "nhs_number", "unit_code", "ambulance_id", "bed"})
+
 # Look-alike / sound-alike names (ISMP confused drug names) that force spell() in readback.
 LASA_PAIRS: dict[str, str] = {
     "hydralazine": "hydroxyzine",
@@ -83,6 +87,10 @@ def slot_for(field: str) -> str:
 
 def is_critical(field: str) -> bool:
     return field in CRITICAL_FIELDS or field.endswith(CRITICAL_SUFFIXES)
+
+
+def is_identifier(field: str) -> bool:
+    return field in IDENTIFIER_FIELDS
 
 
 def drug_name(field: str) -> str | None:
