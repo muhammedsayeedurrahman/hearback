@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!--
+    The product in one glyph: speech delivered, then stopped. Bars to the left of the mark were
+    heard; the red rule is the cut, and nothing after it ever reached the listener.
+  -->
+  <rect x="0.5" y="0.5" width="31" height="31" rx="6.5" fill="#e6ebe2" stroke="#b7c0b1" />
+  <g fill="#0a5ca8">
+    <rect x="6" y="13" width="2.5" height="6" rx="1.25" />
+    <rect x="10" y="9" width="2.5" height="14" rx="1.25" />
+    <rect x="14" y="11" width="2.5" height="10" rx="1.25" />
+  </g>
+  <rect x="19" y="6" width="2" height="20" rx="1" fill="#c02622" />
+  <rect x="23" y="12" width="2.5" height="8" rx="1.25" fill="#b7c0b1" />
+</svg>

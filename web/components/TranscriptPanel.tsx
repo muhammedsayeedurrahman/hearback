@@ -3,14 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { HearbackEvent } from "@/lib/api";
+import { speakerLabel } from "@/lib/labels";
 
 /**
  * The conversation as the system recorded it — including the parts that never reached the
  * listener. An interrupted line is shown cut, with the word the listener was on, because that is
- * the version the agent will reconcile against.
+ * the version the agent has to reconcile against.
+ *
+ * Who is speaking is carried by a coloured spine rather than by a bubble on one side: this is a
+ * record of a handover, not a chat, and the paramedic and the agent are peers in it.
  *
  * The composer is the documented text fallback: when streaming speech is unstable, a turn can be
- * posted as text and the truth state continues unchanged.
+ * posted as text and the truth state continues unchanged. The scripted turns above it are numbered
+ * because they are genuinely a sequence — the handover only makes sense played in order, with the
+ * correction landing after the dose has been read back.
  */
 
 const PROMPTS = [
@@ -56,33 +62,33 @@ export function TranscriptPanel({
   };
 
   return (
-    <section className="flex min-h-0 flex-col border-r border-edge">
-      <PanelHeading>Live conversation</PanelHeading>
+    <section className="flex min-h-[24rem] flex-col border-edge lg:min-h-0 lg:border-r">
+      <PanelHeading hint={lines.length > 0 ? `${lines.length} turns` : undefined}>
+        Live conversation
+      </PanelHeading>
 
-      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3">
-        {lines.length === 0 ? (
-          <p className="text-xs text-muted">
-            Nothing said yet. Post a turn below, or run the agent to feed this from speech.
-          </p>
-        ) : null}
+      <div className="scroll min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3">
+        {lines.length === 0 ? <EmptyTranscript /> : null}
         {lines.map((line, index) => (
           <TranscriptLine key={line.seq} line={line} latest={index === lines.length - 1} />
         ))}
         <div ref={foot} />
       </div>
 
-      <div className="border-t border-edge p-3">
-        <div className="mb-2 flex flex-wrap gap-1">
-          {PROMPTS.map((prompt) => (
+      <div className="border-t border-edge bg-panel p-3">
+        <div className="scroll -mx-1 mb-2 flex gap-2 overflow-x-auto px-1 pb-1.5">
+          {PROMPTS.map((prompt, index) => (
             <button
               key={prompt}
               type="button"
               disabled={busy}
               onClick={() => send(prompt)}
               title={prompt}
-              className="max-w-full truncate rounded border border-edge px-2 py-1 text-[11px] text-muted hover:border-heard/60 hover:text-ink disabled:opacity-40"
+              aria-label={`Say turn ${index + 1}: ${prompt}`}
+              className="btn shrink-0 gap-2 px-2.5 text-[11px]"
             >
-              {prompt}
+              <span className="tabular font-semibold text-faint">{index + 1}</span>
+              <span className="max-w-[22ch] truncate">{prompt}</span>
             </button>
           ))}
         </div>
@@ -97,12 +103,14 @@ export function TranscriptPanel({
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder="Type what the paramedic said…"
-            className="min-w-0 flex-1 rounded border border-edge bg-board px-2 py-1.5 text-sm outline-none placeholder:text-muted focus:border-heard/60"
+            aria-label="What the paramedic said"
+            className="field min-w-0 flex-1 py-2 text-sm"
           />
           <button
             type="submit"
             disabled={busy || !draft.trim()}
-            className="rounded border border-heard/50 px-3 py-1.5 text-sm text-heard hover:bg-heard/10 disabled:opacity-40"
+            className="btn btn-solid btn-lg"
+            style={{ ["--tint" as string]: "var(--color-heard)" }}
           >
             Say
           </button>
@@ -112,33 +120,65 @@ export function TranscriptPanel({
   );
 }
 
+function EmptyTranscript() {
+  return (
+    <div className="raised p-4">
+      <p className="text-sm font-medium text-ink">Nothing said yet.</p>
+      <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
+        Play the scripted handover from the buttons below, in order — the morphine dose is corrected
+        partway through, which is the moment the ledger has to survive. Or type a turn yourself.
+      </p>
+    </div>
+  );
+}
+
 function TranscriptLine({ line, latest }: { line: Line; latest: boolean }) {
+  /* System notes sit on a rail rather than in a card: they are the machine narrating itself. */
   if (line.kind === "note") {
     return (
-      <p className="tabular text-[11px] text-muted">
-        <span className="text-superseded">e{line.epoch}</span> {line.text}
+      <p className="flex gap-2 border-l-2 border-edge-strong py-1 pl-3 text-[11px] leading-relaxed text-muted">
+        <span className="tabular shrink-0 font-medium text-superseded">e{line.epoch}</span>
+        <span>{line.text}</span>
       </p>
     );
   }
+
   const said = line.kind === "said";
+  const words = line.text.split(/\s+/).filter(Boolean);
+  const head = line.cut ? words.slice(0, -1) : words;
+  const tail = line.cut ? words[words.length - 1] : null;
+
   return (
     <div
-      className={`rounded border px-2.5 py-2 text-sm ${
-        latest ? "border-heard/50 bg-heard/5" : "border-edge bg-panel"
-      }`}
+      className={`border-l-[3px] py-2 pr-3 pl-3 transition-colors ${
+        latest ? "bg-raised" : ""
+      } ${line.cut ? "border-l-conflicted" : said ? "border-l-edge-strong" : "border-l-heard"}`}
     >
-      <div className="mb-0.5 flex items-center gap-2 text-[11px] text-muted">
-        <span className={said ? "text-ink" : "text-heard"}>{line.who}</span>
-        <span className="tabular">epoch {line.epoch}</span>
+      <div className="mb-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
+        <span className={`font-semibold ${said ? "text-ink" : "text-heard"}`}>
+          {speakerLabel(line.who)}
+        </span>
+        <span className="tabular text-faint">epoch {line.epoch}</span>
         {line.cut ? (
-          <span className="tabular text-conflicted" title="the audio stopped here">
-            ▌cut at {line.cut.ms} ms on “{line.cut.word}”
+          <span
+            className="tabular ml-auto rounded border border-conflicted/40 bg-conflicted/10 px-1.5 py-0.5 font-semibold text-conflicted"
+            title="the audio stopped here"
+          >
+            cut at {line.cut.ms} ms
           </span>
         ) : null}
       </div>
-      <p className={line.cut ? "text-ink" : ""}>
-        {line.text}
-        {line.cut ? <span className="text-conflicted"> —</span> : null}
+
+      {/* Delivered words paint in the order the listener received them; the cut is where they stop. */}
+      <p className={`text-[15px] leading-relaxed max-sm:text-base ${said ? "" : "anim-sweep"}`}>
+        {head.join(" ")}
+        {tail ? (
+          <>
+            {" "}
+            <span className="cut-word">{tail}</span>
+            <span className="cut-bar" />
+          </>
+        ) : null}
       </p>
     </div>
   );
@@ -205,10 +245,11 @@ function toLines(events: HearbackEvent[]): Line[] {
   return lines;
 }
 
-export function PanelHeading({ children }: { children: React.ReactNode }) {
+export function PanelHeading({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
-    <h2 className="border-b border-edge px-4 py-2 text-[11px] font-semibold tracking-widest text-muted uppercase">
+    <h2 className="flex items-baseline gap-2 border-b border-edge bg-panel px-4 py-2.5 text-[13px] font-semibold text-ink">
       {children}
+      {hint ? <span className="tabular ml-auto text-[11px] font-normal text-faint">{hint}</span> : null}
     </h2>
   );
 }
